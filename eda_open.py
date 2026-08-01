@@ -33,14 +33,6 @@ def savefig(name):
 def savetab(df, name):
     df.to_csv(OUT_DIR / f"{name}.csv")
 
-def obs(text):
-    """Print an observation — something we can see in the data."""
-    print(f"  OBS  : {text}")
-
-def ask(text):
-    """Print an open question raised by the data."""
-    print(f"  Q?   : {text}")
-
 # 1.  First contact — what do we actually have?
 # Three files. What is one row in each of them?
 # What time period does each cover? How do they relate to each other?
@@ -107,18 +99,6 @@ print(f"Panel      : {panel['customer_id'].nunique():>6,} customers, "
       f"{panel['period_month'].nunique():>6,} months,   "
       f"{panel.shape[0]:>7,} rows (customer-month pairs)")
 
-obs(f"Line-level has {ll['customer_id'].nunique():,} customers — events file only "
-    f"covers {ev['customer_id'].nunique():,} of them "
-    f"({ev['customer_id'].nunique()/ll['customer_id'].nunique():.0%}).")
-obs(f"Panel covers {panel['customer_id'].nunique():,} customers and "
-    f"{panel['period_month'].nunique()} calendar months "
-    f"({panel['period_month'].min():%b %Y} – {panel['period_month'].max():%b %Y}).")
-
-ask("Why does the events file cover only ~10% of the customers in "
-    "the line-level file? Is it a filtered export, or is the line-level "
-    "file the fuller record?")
-ask("The panel spans roughly 2.5 years. What happened before September 2023 "
-    "— is there older data somewhere, or did data collection start then?")
 
 # Date ranges 
 print("\nDate ranges")
@@ -132,10 +112,6 @@ print(f"events.occurred_at_timestamp                           "
       f"min={str(s.min())[:19]}  max={str(s.max())[:19]}  "
       f"missing={s.isna().mean():.1%}")
 
-obs("Line-level activation dates go back to 2014 — the business has a "
-    "decade of subscription history.")
-ask("Activations from 2014 to 2023 exist in the line-level file but not "
-    "in the panel. How much of the story are we missing without that history?")
 
 # 2.  Who are the customers?
 # What kinds of customers does Artlogic have? Where are they?
@@ -163,11 +139,6 @@ axes[1].set(title="Customer types (share %)", xlabel="% of customers")
 plt.tight_layout()
 savefig("02a_customer_types")
 
-obs(f"Galleries ({ct_pct.get('Gallery',0):.0%}) and Collectors "
-    f"({ct_pct.get('Collector',0):.0%}) together make up the bulk of the base.")
-ask("What is the meaningful distinction between these types from a "
-    "business perspective — do they use different products, pay differently, "
-    "or stay for different lengths of time?")
 
 # Geography 
 print("\nGeography (top 15 countries by customer count)")
@@ -184,10 +155,6 @@ plt.ylabel("# customers")
 plt.xticks(rotation=45)
 savefig("02b_geography")
 
-obs(f"US and GB together account for "
-    f"{cust['billing_address_country'].isin(['US','GB']).mean():.0%} of customers.")
-ask("Is Artlogic primarily a US/UK product, or is the international footprint "
-    "growing over time? Does country affect how customers use the product?")
 
 # Parent-child hierarchy 
 print("\nParent-child hierarchy")
@@ -203,9 +170,6 @@ children_per_parent = (cust.dropna(subset=["parent_customer_id"])
 print(f"Children per parent: mean={children_per_parent.mean():.1f}, "
       f"max={children_per_parent.max()}")
 
-ask("What does the parent-child relationship mean in practice — "
-    "is this a corporate group, a reseller arrangement, or something else? "
-    "Should modelling happen at the child level, parent level, or both?")
 
 # 3.  What are customers buying?
 # Products, billing periods, currencies, and the plan/add-on split.
@@ -228,8 +192,6 @@ axes[1].set(title="Line items by type (plan vs add-on)", xlabel="item type")
 plt.tight_layout()
 savefig("03a_products")
 
-obs("Subscriptions are made up of plans (base product) plus add-ons — "
-    "each subscription has roughly 2 line items on average.")
 
 # Plan vs add-on revenue split 
 print("\nMRR by item type (plan vs add-on, all subscriptions)")
@@ -241,8 +203,6 @@ mrr_by_item_type["share_of_mrr"] = (mrr_by_item_type["sum"] /
 print(mrr_by_item_type.round(2).to_string())
 savetab(mrr_by_item_type, "03_mrr_by_item_type")
 
-obs(f"Plans account for {mrr_by_item_type.loc['plan','share_of_mrr']:.0%} "
-    f"of total MRR; the rest comes from add-ons.")
 
 # Add-on adoption per subscription 
 print("\nAdd-on adoption per subscription (active subs only)")
@@ -270,8 +230,6 @@ print("\nAdd-on adoption rate by customer type (active subs)")
 print(addon_by_type.round(3).to_string())
 savetab(addon_by_type, "03_addon_by_type")
 
-ask("Do customers who buy add-ons stay longer than those on a base plan only? "
-    "Is add-on adoption a signal of engagement, or just of having a bigger budget?")
 
 # Quantity field 
 print("\nQuantity field (are there multi-seat line items?)")
@@ -283,11 +241,6 @@ if len(qty_gt1) > 0:
     print(qty_gt1["item_type"].value_counts().to_string())
     print(f"MRR on quantity>1 rows: £{qty_gt1['MRR_GBP'].sum():,.0f}")
 
-obs(f"Most line items have quantity=1, but {len(qty_gt1):,} rows have "
-    f"quantity > 1 — suggesting some line items represent multi-seat bundles.")
-ask("What does quantity represent exactly — user seats, storage units, "
-    "something else? Does MRR_GBP already account for quantity, or is it "
-    "per-unit and needs multiplying?")
 
 # Billing period 
 print("\nBilling periods")
@@ -302,18 +255,12 @@ plt.ylabel("# subscriptions")
 plt.xticks(rotation=0)
 savefig("03b_billing_period")
 
-obs(f"Quarterly billing (3 months) is by far the most common "
-    f"({(bp==3).mean():.0%} of subscriptions).")
-ask("Why is quarterly so dominant? Is this a pricing/sales default, "
-    "or do customers prefer it? Does the billing period affect how "
-    "customers engage with the product?")
 
 # Currency mix 
 print("\nCurrency mix")
 curr = ll.drop_duplicates("subscription_id")["currency_code"].value_counts()
 print(curr.to_string())
-ask("Are there FX conversion effects to be aware of when comparing "
-    "revenue across regions?")
+
 
 # 4.  How much do customers pay?
 # Revenue distributions at subscription and customer level.
@@ -345,21 +292,13 @@ axes[1].set(title="MRR per active subscription (log10 scale)",
 plt.tight_layout()
 savefig("04a_mrr_distribution")
 
-obs(f"Active subscription MRR: median £{active_mrr.median():,.0f}, "
-    f"mean £{active_mrr.mean():,.0f}, max £{active_mrr.max():,.0f}. "
-    f"The distribution is right-skewed.")
 
 # Zero-MRR active subscriptions 
 # MRR_GBP structural missingness by status 
 print("\nMRR_GBP missingness by status")
 print(ll.groupby("status")["MRR_GBP"].apply(lambda s: s.isna().mean())
         .round(3).to_string())
-obs("MRR_GBP is structurally missing for cancelled and paused subs — "
-    "the line-level file is a 'current state' snapshot, not a historical "
-    "revenue ledger. This means the historical revenue trajectory of "
-    "customers who churned cannot be reconstructed from this file alone.")
-ask("Is there a separate historical revenue table somewhere, or is the "
-    "events file the only place where past MRR is recorded?")
+
 
 # Zero-MRR active line items 
 print("\nZero-MRR active subscriptions")
@@ -377,11 +316,6 @@ if len(zero_mrr) > 0:
     print("\nCustomer types among zero-MRR active rows:")
     print(zero_mrr["customer_type"].value_counts().head(8).to_string())
 
-obs(f"{len(zero_subs):,} active subscriptions have £0 total MRR. "
-    f"These could be free trials, internal/comp accounts, or pricing anomalies.")
-ask("What are zero-MRR active subscriptions? Should they be included "
-    "or excluded in any revenue or churn analysis? The answer needs "
-    "confirmation from Corey.")
 
 # Concentration 
 sorted_mrr = active_mrr.sort_values(ascending=False).reset_index(drop=True)
@@ -402,12 +336,6 @@ print(f"\nConcentration: top {subs_for_80:,} subscriptions "
       f"({subs_for_80/len(active_mrr):.0%} of active subs) "
       f"account for 80% of total active MRR.")
 
-obs(f"Revenue is moderately concentrated: "
-    f"{subs_for_80/len(active_mrr):.0%} of active subscriptions "
-    f"generate 80% of MRR.")
-ask("Does revenue concentration matter for how we define 'customer value'? "
-    "Should we treat a £20/month subscriber and a £2,000/month subscriber "
-    "the same way analytically?")
 
 # MRR by customer type (subscription level) 
 print("\nMRR by customer type (active subs only)")
@@ -459,12 +387,6 @@ plt.legend()
 savefig("04d_mrr_concentration_customer")
 savetab(cust_mrr.describe().to_frame(), "04_mrr_per_customer")
 
-obs(f"At the customer level, the top {custs_for_80/len(cust_mrr):.0%} of customers "
-    f"account for 80% of MRR — slightly more or less concentrated than the "
-    f"subscription level, depending on multi-subscription patterns.")
-ask("Multi-subscription customers make up {:.0%} of the active base. "
-    "Are they a meaningfully different population — do they pay more, "
-    "stay longer, or churn differently?".format(pct_multi))
 
 # MRR by billing period 
 print("\nAvg MRR by billing period (active subs)")
@@ -472,8 +394,7 @@ mrr_bp = (sub_mrr.loc[sub_mrr["status"] == "active"]
           .groupby("billing_period_months")["MRR_GBP"]
           .agg(["count", "median", "mean"]).round(0))
 print(mrr_bp.to_string())
-ask("Does the billing period reflect the size or commitment level of a "
-    "customer, or is it mostly a pricing plan default?")
+
 
 # 5.  When did customers join and how long do they stay?
 # Activation history, the pre/post-acquisition split, tenure distribution, and how the customer base has grown over time.
@@ -501,11 +422,6 @@ print(act.groupby("act_year").size().to_string())
 print("\nTop 10 activation months")
 print(monthly_new.sort_values(ascending=False).head(10).to_string())
 
-obs("Activation volume has increased over time, with visible spikes "
-    "in certain months that may correspond to campaigns or external events.")
-ask("What drove the activation spikes? Are they organic growth, "
-    "a sales campaign, an acquisition event, or seasonal? "
-    "Does the cohort that joined during a spike behave differently?")
 
 # Pre / post-acquisition split 
 ACQ_DATE = pd.Timestamp("2025-07-29")  
@@ -564,12 +480,6 @@ axes[1].tick_params(axis="x", rotation=30)
 plt.tight_layout()
 savefig("05d_pre_post_acquisition")
 
-obs("The activation histogram likely shows a step-change around the "
-    "acquisition date. The geographic and customer-type mix may have "
-    "shifted between pre- and post-acquisition cohorts.")
-ask("Did the acquisition materially change who Artlogic's customers are "
-    "(geography, type, MRR)? If so, pre- and post-acquisition customers "
-    "may need to be modelled separately.")
 
 # Current age of active subscriptions 
 sub_level = (ll.sort_values("subscription_activated_date")
@@ -609,11 +519,6 @@ axes[1].set(title="Cumulative distribution of observed duration",
 plt.tight_layout()
 savefig("05b_duration_distribution")
 
-obs("Active subscriptions have a wide range of ages — from brand-new to "
-    "over 10 years. Cancelled subscriptions span a similar range.")
-ask("Is there a 'typical' lifespan for a subscription, or is it bimodal "
-    "(some leave quickly, some stay for years)? Does it depend on the "
-    "type of customer or product?")
 
 # When in a subscription's life do cancellations happen?
 cancelled = sub_level.loc[sub_level["status"] == "cancelled"].copy()
@@ -626,13 +531,6 @@ plt.xlabel("months from activation to cancellation")
 plt.ylabel("# cancelled subscriptions")
 savefig("05c_duration_at_cancellation")
 
-obs(f"Median time-to-cancellation: "
-    f"{cancelled['observed_months'].median():.1f} months. "
-    f"The distribution has a long tail.")
-ask("Is cancellation risk highest early in a subscription's life, "
-    "later, or roughly constant? The shape of this histogram — "
-    "how cancellation risk changes with subscription age — is the "
-    "starting point for any model of customer behaviour.")
 
 # 6.  What happens to subscriptions over time?
 
@@ -649,9 +547,6 @@ plt.ylabel("# subscriptions")
 plt.xticks(rotation=0)
 savefig("06a_status_distribution")
 
-ask(f"About {status_pct.get('cancelled',0):.0%} of all subscriptions ever "
-    f"created are now cancelled — is that high or low for a B2B SaaS product "
-    f"in this sector? How does it split across customer types and products?")
 
 print("\n'non_renewing' — what is it?")
 nr = sub_level.loc[sub_level["status"] == "non_renewing"]
@@ -660,9 +555,6 @@ print(f"  {len(nr):,} subscriptions are non_renewing "
 print(f"  Customer types among non_renewing:")
 print(nr["customer_type"].value_counts().head(5).to_string())
 
-ask("non_renewing means a cancellation has been requested but not yet "
-    "processed. Should these be treated as already-gone for modelling "
-    "purposes, or as still-active? The answer matters for any rate calculation.")
 
 # Pause / resume cycle 
 print("\nPause / resume cycle")
@@ -678,12 +570,6 @@ if len(ev) > 0:
         print("\n  Pause event types seen:")
         print(pause_events["event_type"].value_counts().to_string())
 
-obs("'paused' is one of the four subscription statuses. "
-    "Pauses that resume represent a customer retained; pauses that "
-    "convert to cancellations represent delayed churn.")
-ask("How many paused subscriptions eventually resume vs eventually cancel? "
-    "Is pausing a leading indicator of cancellation, or a recovery signal? "
-    "This matters for how we define and predict churn.")
 
 # Cancellation rate over calendar time 
 can = (ll.dropna(subset=["subscription_cancellation_date"])
@@ -713,8 +599,6 @@ axes[1].tick_params(axis="x", rotation=0)
 plt.tight_layout()
 savefig("06b_activations_vs_cancellations")
 
-ask("Is the business growing (more activations than cancellations each year), "
-    "contracting, or roughly in balance? Has this changed over time?")
 
 # Seasonality: do cancellations cluster in any month of the year? 
 print("\nCancellations by month of year (seasonality check)")
@@ -731,11 +615,6 @@ plt.xticks(rotation=0)
 savefig("06c_cancellation_seasonality")
 savetab(monthly_seasonality.to_frame(), "06_cancellation_seasonality")
 
-obs("If cancellations cluster in specific months, that could reflect "
-    "renewal cycles (annual subs cancelling at year-end) or budget cycles.")
-ask("Do cancellations peak at year-end or at other predictable times? "
-    "If so, is this driven by annual billing renewals, or something else? "
-    "Seasonality would matter for any time-based forecast.")
 
 # 7.  Why do subscriptions end?
 # Cancel reasons
@@ -758,12 +637,6 @@ savefig("07a_cancel_reasons")
 print(f"\nCancelled subs with no reason recorded: "
       f"~{ll.loc[ll['status']=='cancelled','cancel_reason_code'].isna().mean():.0%}")
 
-obs("A large share of cancellations have no reason recorded. "
-    "Among those that do, reasons range from price sensitivity "
-    "to non-payment to product dissatisfaction.")
-ask("How do the different cancellation reasons map to different types of "
-    "customers or products? And does missing reason correlate with anything "
-    "observable (e.g., customer age, billing period)?")
 
 # Cancel reasons by customer type 
 print("\nCancel reasons: present vs missing by customer type")
@@ -776,9 +649,6 @@ print(canc_ll.groupby("customer_type")["has_reason"]
              .sort_values("size", ascending=False)
              .round(2).to_string())
 
-ask("Is the missing-reason problem uniform across customer types, or is it "
-    "concentrated in a particular segment? This matters because missing "
-    "reasons limit what we can learn about why customers leave.")
 
 # Cancel reason by billing period 
 print("\nReason coverage by billing period")
@@ -786,10 +656,6 @@ bp_reason = (canc_ll.groupby("billing_period_months")["has_reason"]
              .agg(["mean","size"]).sort_values("billing_period_months"))
 print(bp_reason.to_string())
 
-obs("Monthly-billed cancellations have far fewer reasons recorded "
-    "than annual cancellations.")
-ask("Is this a data entry issue (cancellation workflow doesn't prompt "
-    "for reasons on monthly subs) or something structural?")
 
 # 8.  What does the event stream tell us?
 
@@ -804,12 +670,6 @@ ax.set(title="Event types in the events file", xlabel="# events")
 plt.tight_layout()
 savefig("08a_event_types")
 
-obs("Renewals dominate the event stream — most event rows are a "
-    "subscription auto-renewing, which is the normal state. "
-    "Changes, cancellations, pauses are much rarer.")
-ask("Is the event stream complete (every event is logged) or are "
-    "there gaps? The high proportion of renewal events "
-    "suggests it may be fairly complete for the ~10% it covers.")
 
 # Events per customer 
 events_per_cust = ev.groupby("customer_id").size()
@@ -822,9 +682,6 @@ plt.title("Events per customer (capped at 100)")
 plt.xlabel("# events")
 savefig("08b_events_per_customer")
 
-ask("Customers with more events — are they more engaged, or just "
-    "have more plan-change activity? Does event volume correlate "
-    "with how long a customer stays?")
 
 # Customer journeys: first and last event 
 journey = (ev.dropna(subset=["occurred_at_timestamp"])
@@ -842,12 +699,6 @@ print(journey["first_event"].value_counts(normalize=True).to_string())
 print("\nLast event type (what ends a subscription journey?)")
 print(journey["last_event"].value_counts(normalize=True).to_string())
 
-obs("Most subscription journeys in the events file begin with a "
-    "renewal (not a creation) — consistent with these being "
-    "existing customers at the time the event logging began.")
-ask("What does a 'healthy' subscription journey look like vs one "
-    "that's heading toward cancellation? Are there early warning "
-    "signals in the event sequence?")
 
 # Look at one complex customer journey in detail 
 print("\nSample detailed customer journey")
@@ -861,9 +712,6 @@ journey_sample = (ev.loc[ev["customer_id"] == most_events]
 print(f"\nCustomer with most events (ID suffix: ...{most_events[-8:]}):")
 print(journey_sample.to_string(index=False))
 
-ask("Following one customer's full event history: does the sequence "
-    "of events tell a coherent story? Can you see upgrades, downgrades, "
-    "pauses, and cancellations as distinct lifecycle moments?")
 
 # 9.  The monthly panel — customer trajectories over time
 
@@ -896,13 +744,6 @@ savetab(monthly_active.set_index("period_month"), "09_monthly_overview")
 print("\nMonthly panel overview")
 print(monthly_active.to_string(index=False))
 
-obs("The panel shows irregular peaks in total MRR in January and July, "
-    "likely due to annual and quarterly billing renewal events being "
-    "captured unevenly. ARPU appears to be gradually increasing.")
-ask("Is the revenue base growing, flat, or declining when the "
-    "renewal-event spikes are smoothed out? What is driving the "
-    "ARPU increase — price increases, upsells, or a change in "
-    "the customer mix over time?")
 
 # MRR per customer: how stable is it month-to-month? 
 panel_sorted = panel.sort_values(["customer_id","period_month"])
@@ -918,12 +759,6 @@ print(f"  MRR unchanged (±£0.01):  {stable:.1%}")
 print(f"  MRR increased:           {expanding:.1%}")
 print(f"  MRR decreased (not zero):{contracting:.1%}")
 
-obs(f"{stable:.0%} of customer-months show no MRR change at all. "
-    f"When MRR does change, expansion ({expanding:.0%}) is more "
-    f"common than contraction ({contracting:.0%}).")
-ask("Is MRR expansion happening through price increases, add-on purchases, "
-    "or seat growth? Understanding the mechanism matters for any model "
-    "that assumes revenue stays constant.")
 
 # churned_next_month: the panel's churn signal 
 print("\nchurned_next_month distribution")
@@ -955,12 +790,6 @@ plt.ylabel("share of customers leaving next month")
 plt.legend()
 savefig("09b_monthly_churn_ts")
 
-obs(f"The overall monthly churn rate is {monthly_churn:.2%}. "
-    f"It varies over time — some months are materially higher "
-    f"or lower than the mean.")
-ask("Is the variation in monthly churn rate random noise, or are "
-    "there systematic patterns (seasonal, trend)? Does churn correlate "
-    "with things like activation cohort, time-since-last-event, or MRR level?")
 
 # has_churn_event vs churned_next_month 
 print("\nhas_churn_event vs churned_next_month")
@@ -968,13 +797,6 @@ xt = pd.crosstab(panel["has_churn_event"], panel["churned_next_month"],
                  margins=True, normalize="index").round(3)
 print(xt.to_string())
 
-obs("78% of the time a churn event is recorded in a month, the customer "
-    "is NOT gone the following month. This means has_churn_event captures "
-    "scheduled cancellations, pauses, and other lifecycle events — "
-    "not just terminal departures.")
-ask("What kinds of events make up the 78% of has_churn_event=1 rows "
-    "where the customer stays? Are these recoverable cancellations, pauses, "
-    "or something else? Understanding this matters for what we define as 'churn'.")
 
 # Recurrent churn events: customers with multiple churn-event months 
 print("\nRecurrent churn signals (customers with >1 churn-event month)")
@@ -990,12 +812,6 @@ print(f"\nCustomers with >1 churn-event month: "
 savetab(churn_event_months.value_counts().sort_index().to_frame("n_customers"),
         "09_recurrent_churn_events")
 
-obs(f"{pct_recurrent:.0%} of customers who ever had a churn event had "
-    f"more than one across the panel window — i.e., they signalled "
-    f"cancellation, stayed, and then signalled again (or churned and returned).")
-ask("Are these recurrent signals scheduled-then-reversed cancellations, "
-    "pauses, or genuine churners who came back? This is a structural "
-    "feature that any model of customer departure needs to decide how to handle.")
 
 # tenure_months in the panel 
 print("\nWhat does tenure_months in the panel actually measure?")
@@ -1014,16 +830,8 @@ print(f"  tenure_months == months since first panel row: "
       f"{(diff == 0).mean():.0%} of rows (confirmed)")
 print(f"  Panel starts: {panel['period_month'].min():%b %Y}")
 
-obs("tenure_months in the panel counts months since the customer's "
-    "first row in the panel (September 2023) — NOT months since "
-    "the subscription was activated.")
-ask("Do we have the actual activation dates for panel customers in the "
-    "line-level file? If so, we can compute true tenure-since-activation "
-    "and understand whether cancellation risk genuinely varies by customer age, "
-    "or whether what we're seeing is an artefact of when data collection started.")
 
 # 10.  Patterns that cut across everything
-
 # Enrich panel with attributes 
 # customer_type, country, billing_period_months are already in the enriched panel
 panel_rich = panel_obs.copy()
@@ -1087,11 +895,6 @@ sns.heatmap(two_way.mul(100).round(2), annot=True, fmt=".2f",
 plt.title("Monthly churn rate (%): customer type × billing period")
 savefig("10b_churn_heatmap")
 
-obs("Some customer-type × billing-period combinations have notably "
-    "different churn rates than others, even within the same customer type.")
-ask("Are these segment differences big enough to be meaningful, or are "
-    "they within the noise? Do the high-churn segments also tend to have "
-    "lower MRR, or are they a meaningful revenue risk?")
 
 # MRR at the start vs churn 
 panel_with_mrr = panel_obs.copy()
@@ -1116,10 +919,6 @@ plt.ylabel("monthly churn rate (%)")
 plt.xticks(rotation=20)
 savefig("10c_churn_by_mrr")
 
-ask("Does paying more (higher MRR) correlate with staying longer, "
-    "or with churning sooner? The direction of this relationship has "
-    "different implications depending on whether high-value customers "
-    "are more or less committed to the product.")
 
 # 11.  What the data is asking
 # A summary of the open questions the EDA has generated.
