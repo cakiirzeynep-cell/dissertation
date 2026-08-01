@@ -9,11 +9,10 @@ from statsmodels.genmod.families.links import Logit
 
 warnings.filterwarnings("ignore")
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data"
+OUT  = Path(__file__).resolve().parent / "output"
 
-print("Task 8 — APC dual-fit for SQ3")
-
+# APC dual-fit for SQ3
 # 1. Load + prepare data
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 panel["period_month"] = pd.to_datetime(panel["period_month"], format="%Y-%m")
@@ -153,8 +152,6 @@ sensitivity_coefs = pd.DataFrame({
 sensitivity_coefs.to_csv(OUT / "08_apc_sensitivity_coefficients.csv", index=False)
 
 # 6. Period-coefficient comparison — the SQ3 deliverable
-print("Period-coefficient comparison (SQ3 decomposition)")
-
 # Extract period coefficients from each fit
 def period_coefs(fit, label):
     rows = []
@@ -199,9 +196,11 @@ median_delta = compare["delta_full_minus_restricted"].median()
 n_collapse = (compare["coef_restricted"].abs() < compare["coef_full"].abs() * 0.5).sum()
 n_persist = (compare["coef_restricted"].abs() >= compare["coef_full"].abs() * 0.5).sum()
 correlation = compare[["coef_full", "coef_restricted"]].corr().iloc[0, 1]
+corr_sens = compare[["coef_full", "coef_sensitivity"]].corr().iloc[0, 1]
 print(f"  Common periods compared: {n_periods}")
 print(f"  Mean coefficient delta (full - restricted): {mean_delta:+.4f}")
 print(f"  Median coefficient delta: {median_delta:+.4f}")
 print(f"  Period coefficients that collapse (|restricted| < 50% of |full|): {n_collapse}/{n_periods}")
 print(f"  Period coefficients that persist (|restricted| ≥ 50% of |full|): {n_persist}/{n_periods}")
 print(f"  Correlation between full and restricted period coefficients: {correlation:+.4f}")
+print(f"  Correlation between full and sensitivity period coefficients: {corr_sens:+.4f}") 
