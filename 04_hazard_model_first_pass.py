@@ -10,11 +10,10 @@ from sklearn.metrics import roc_auc_score, brier_score_loss
 
 warnings.filterwarnings("ignore")
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data"
+OUT  = Path(__file__).resolve().parent / "output"
 
-print("Task 4 — First-pass discrete-time hazard model")
-
+# First-pass discrete-time hazard model
 # 1. Load + apply exclusions
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 panel["period_month"] = pd.to_datetime(panel["period_month"], format="%Y-%m")
@@ -99,7 +98,6 @@ print(f"Test  (Jul 2025 – Apr 2026): {len(test):>6,} rows, "
 
 # Use C() factors with explicit references via patsy-style dummies
 def build_design(df, fit_columns=None):
-    """One-hot encode categoricals; align columns to fit_columns if provided."""
     X = pd.get_dummies(
         df[["tenure_bin", "customer_type_grouped", "billing_grouped",
             "country_grouped", "period_str"]],
@@ -138,7 +136,6 @@ print(f"  Train: {X_train.shape}")
 print(f"  Test:  {X_test.shape}")
 
 # 5. Fit both models
-print("\nFitting logit model")
 logit_model = GLM(y_train, X_train, family=Binomial(link=Logit()))
 logit_fit = logit_model.fit()
 print(f"Converged: {logit_fit.converged}")
@@ -146,7 +143,7 @@ print(f"Train deviance: {logit_fit.deviance:.2f}")
 print(f"AIC:            {logit_fit.aic:.2f}")
 print(f"Log-likelihood: {logit_fit.llf:.2f}")
 
-print("\nFitting cloglog model")
+# Fit cloglog model
 cloglog_model = GLM(y_train, X_train, family=Binomial(link=CLogLog()))
 cloglog_fit = cloglog_model.fit()
 print(f"Converged: {cloglog_fit.converged}")
@@ -155,7 +152,6 @@ print(f"AIC:            {cloglog_fit.aic:.2f}")
 print(f"Log-likelihood: {cloglog_fit.llf:.2f}")
 
 # 6. Held-out performance
-print("\nHeld-out test performance")
 p_logit_test   = logit_fit.predict(X_test)
 p_cloglog_test = cloglog_fit.predict(X_test)
 
@@ -258,5 +254,3 @@ if logit_fit.deviance < cloglog_fit.deviance:
 else:
     primary = "cloglog"
 print(f"\nPRIMARY (better-fitting): {primary.upper()}")
-
-print(f"\nAll outputs saved to: {OUT}")
