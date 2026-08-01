@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 
 # paths
-BASE   = Path(__file__).resolve().parent.parent / "data files"
+BASE   = Path(__file__).resolve().parent.parent / "data"
 PANEL  = BASE / "subscription_event_anon_cltv_tidy.csv"
 LL     = BASE / "customer_linelevel_anon.csv"
 EVENTS = BASE / "subscription_events_anon.csv"
