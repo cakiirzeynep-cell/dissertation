@@ -5,7 +5,7 @@ DATA = Path(__file__).resolve().parent.parent / "data"
 OUT  = Path(__file__).resolve().parent / "output"
 OUT.mkdir(parents=True, exist_ok=True)
 
-# 1. Build cross-platform flag
+# Build cross-platform flag
 mig = pd.read_csv(DATA / "migration_matches_anon.csv", low_memory=False)
 print(f"\nMigration list: {len(mig):,} rows")
 print(f"Unique AL IDs:  {mig['al_customer_id'].nunique():,}")
