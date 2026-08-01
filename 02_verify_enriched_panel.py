@@ -1,12 +1,10 @@
 from pathlib import Path
 import pandas as pd
-import numpy as np
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
+DATA = Path(__file__).resolve().parent.parent / "data"
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 
-print("Task 2 — Verify enriched panel readiness")
-
+# Verify enriched panel readiness
 # Shape and basic integrity
 print(f"\nShape: {panel.shape[0]:,} rows × {panel.shape[1]} cols")
 print(f"Unique customers: {panel['customer_id'].nunique():,}")
