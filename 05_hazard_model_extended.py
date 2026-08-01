@@ -10,11 +10,10 @@ from sklearn.metrics import roc_auc_score, brier_score_loss
 
 warnings.filterwarnings("ignore")
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data"
+OUT  = Path(__file__).resolve().parent / "output"
 
-print("Task 5 — Extended hazard model")
-
+# Extended hazard model
 # 1. Load and apply exclusions 
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 panel["period_month"] = pd.to_datetime(panel["period_month"], format="%Y-%m")
@@ -178,7 +177,6 @@ print(substantive_sig[["covariate", "coef", "exp_coef", "p_value", "sig"]]
       .round(4).to_string(index=False))
 
 # 8. Average Marginal Effects for all substantive covariates
-print("\nComputing Average Marginal Effects on training set")
 ames = []
 
 p_train_base = logit_fit.predict(X_train)
@@ -223,7 +221,7 @@ print(ames_df[["covariate", "coef", "exp_coef", "ame_pct_points", "p_value"]]
       .head(15).round(4).to_string(index=False))
 
 # 9. Interaction analysis: is_cross_platform × tenure_bin
-print("MECHANISM TEST — cross-platform effect by tenure bin")
+print("Mechanism Test — cross-platform effect by tenure bin")
 # Main effect of is_cross_platform = effect at the reference tenure (12-23)
 # Interaction terms add to this for each non-reference tenure bin
 print("\n(Reference tenure bin: 12-23 months — its cross-platform effect is given by the is_cross_platform main coefficient alone.)")
@@ -291,7 +289,7 @@ diag = pd.DataFrame({
 })
 diag.to_csv(OUT / "05_hazard_extended_diagnostics.csv", index=False)
 
-print("\nVERDICT")
+print("\nVerdict")
 log_mrr_coef = logit_fit.params.get("log_mrr", np.nan)
 log_mrr_p    = logit_fit.pvalues.get("log_mrr", np.nan)
 log_mrr_ame  = ames_df.loc[ames_df["covariate"] == "log_mrr", "ame_pct_points"].values
