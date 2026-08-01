@@ -8,12 +8,10 @@ from sklearn.metrics import roc_auc_score, brier_score_loss
 
 warnings.filterwarnings("ignore")
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data"
+OUT  = Path(__file__).resolve().parent / "output"
 
-print("Task 6 — sBG benchmark fit")
-
-
+# sBG benchmark fit
 # 1. Load panel and apply 
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 panel["period_month"] = pd.to_datetime(panel["period_month"], format="%Y-%m")
@@ -77,7 +75,6 @@ def fit_sbg(df):
     return alpha, beta, -result.fun, len(df), int(F.sum())
 
 # 3. Aggregate sBG fit
-print("\nFitting aggregate sBG")
 alpha_agg, beta_agg, llf_agg, n_train, n_events_train = fit_sbg(train)
 print(f"  α = {alpha_agg:.4f}")
 print(f"  β = {beta_agg:.4f}")
@@ -102,7 +99,6 @@ agg_fit_df = pd.DataFrame([{
 agg_fit_df.to_csv(OUT / "06_sbg_aggregate_fit.csv", index=False)
 
 # 4. Per-customer_type sBG fits
-print("\nFitting per-customer_type sBG")
 per_seg_fits = []
 for seg in sorted(train["customer_type_grouped"].unique()):
     seg_train = train.loc[train["customer_type_grouped"] == seg]
@@ -149,7 +145,6 @@ def predict_per_seg(row):
 test["p_sbg_per_seg"] = test.apply(predict_per_seg, axis=1)
 
 # 6. Comparison vs hazard model 
-print("\nRe-running Task 5 logit on test for comparison")
 import statsmodels.api as sm
 from statsmodels.genmod.generalized_linear_model import GLM
 from statsmodels.genmod.families import Binomial
@@ -267,4 +262,3 @@ for seg in sorted(test_eval["customer_type_grouped"].unique()):
 seg_comp = pd.DataFrame(seg_rows)
 print(seg_comp.round(4).to_string(index=False))
 seg_comp.to_csv(OUT / "06_sbg_vs_hazard_heldout.csv", index=False)
-
