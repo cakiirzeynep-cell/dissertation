@@ -12,7 +12,7 @@ import seaborn as sns
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 PROJECT_DIR = Path("/Users/zeynepcakir/Desktop/msc dissertation")
-DATA_DIR    = PROJECT_DIR / "data files "   # trailing space is real
+DATA_DIR    = PROJECT_DIR / "data"  
 FIG_DIR     = PROJECT_DIR / "analysis" / "figures_open"
 OUT_DIR     = PROJECT_DIR / "analysis" / "output_open"
 FIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -33,11 +33,6 @@ def savefig(name):
 def savetab(df, name):
     df.to_csv(OUT_DIR / f"{name}.csv")
 
-def section(title):
-    print(f"\n{'='*60}")
-    print(f"  {title}")
-    print('='*60)
-
 def obs(text):
     """Print an observation — something we can see in the data."""
     print(f"  OBS  : {text}")
@@ -49,8 +44,6 @@ def ask(text):
 # 1.  First contact — what do we actually have?
 # Three files. What is one row in each of them?
 # What time period does each cover? How do they relate to each other?
-
-section("1. FIRST CONTACT")
 
 # Load 
 ll = pd.read_csv(DATA_DIR / "customer_linelevel_anon.csv",
@@ -148,8 +141,6 @@ ask("Activations from 2014 to 2023 exist in the line-level file but not "
 # What kinds of customers does Artlogic have? Where are they?
 # How concentrated is the customer base?
 
-section("2. WHO ARE THE CUSTOMERS?")
-
 # Customer type 
 # Deduplicate to one row per customer (using most-recent subscription)
 cust = (ll.sort_values("subscription_activated_date")
@@ -218,8 +209,6 @@ ask("What does the parent-child relationship mean in practice — "
 
 # 3.  What are customers buying?
 # Products, billing periods, currencies, and the plan/add-on split.
-
-section("3. WHAT ARE CUSTOMERS BUYING?")
 
 # Product families 
 print("\nProduct families")
@@ -330,8 +319,6 @@ ask("Are there FX conversion effects to be aware of when comparing "
 # Revenue distributions at subscription and customer level.
 # Who pays the most? Is revenue concentrated or spread?
 # What about zero-MRR rows?
-
-section("4. HOW MUCH DO CUSTOMERS PAY?")
 
 # Sub-level MRR (summed across line items) 
 sub_mrr = (ll.groupby("subscription_id")
@@ -491,8 +478,6 @@ ask("Does the billing period reflect the size or commitment level of a "
 # 5.  When did customers join and how long do they stay?
 # Activation history, the pre/post-acquisition split, tenure distribution, and how the customer base has grown over time.
 
-section("5. WHEN DID CUSTOMERS JOIN AND HOW LONG DO THEY STAY?")
-
 # Activation history 
 act = (ll.dropna(subset=["subscription_activated_date"])
          .drop_duplicates("subscription_id")
@@ -651,8 +636,6 @@ ask("Is cancellation risk highest early in a subscription's life, "
 
 # 6.  What happens to subscriptions over time?
 
-section("6. WHAT HAPPENS TO SUBSCRIPTIONS?")
-
 print("\nOverall subscription status")
 status_counts = sub_level["status"].value_counts()
 status_pct = sub_level["status"].value_counts(normalize=True)
@@ -757,8 +740,6 @@ ask("Do cancellations peak at year-end or at other predictable times? "
 # 7.  Why do subscriptions end?
 # Cancel reasons
 
-section("7. WHY DO SUBSCRIPTIONS END?")
-
 # Raw reason distribution 
 reasons = (ll.loc[ll["status"] == "cancelled"]
              .drop_duplicates("subscription_id")["cancel_reason_code"]
@@ -811,8 +792,6 @@ ask("Is this a data entry issue (cancellation workflow doesn't prompt "
     "for reasons on monthly subs) or something structural?")
 
 # 8.  What does the event stream tell us?
-
-section("8. WHAT DOES THE EVENT STREAM TELL US?")
 
 print("\nEvent types (all events)")
 et = ev["event_type"].value_counts()
@@ -887,8 +866,6 @@ ask("Following one customer's full event history: does the sequence "
     "pauses, and cancellations as distinct lifecycle moments?")
 
 # 9.  The monthly panel — customer trajectories over time
-
-section("9. THE MONTHLY PANEL — CUSTOMER TRAJECTORIES")
 
 print(f"\nPanel covers: {panel['period_month'].min():%b %Y} "
       f"to {panel['period_month'].max():%b %Y} "
@@ -1047,8 +1024,6 @@ ask("Do we have the actual activation dates for panel customers in the "
 
 # 10.  Patterns that cut across everything
 
-section("10. CROSS-CUTTING PATTERNS")
-
 # Enrich panel with attributes 
 # customer_type, country, billing_period_months are already in the enriched panel
 panel_rich = panel_obs.copy()
@@ -1149,81 +1124,9 @@ ask("Does paying more (higher MRR) correlate with staying longer, "
 # 11.  What the data is asking
 # A summary of the open questions the EDA has generated.
 
-section("11. WHAT THE DATA IS ASKING")
-
 # Compute the recurrent figures 
 _n_churn_custs = (panel.loc[panel["has_churn_event"]==1]
                    .groupby("customer_id")["period_month"].nunique())
 _n_recurrent     = (_n_churn_custs > 1).sum()          # 1,182
 _pct_of_all      = _n_recurrent / panel["customer_id"].nunique()  # % of all panel customers
 _pct_of_churners = (_n_churn_custs > 1).mean()          # % of those who ever had a churn event
-
-print(f"""
-The data has raised the following questions that a research design
-needs to address:
-
-ABOUT THE DATA ITSELF
-
-Q1. The events file covers only ~10% of customers. Why? Is it a
-    filtered export or the only event-level data available? This
-    determines whether we can do any event-sequence modelling.
-
-Q2. The monthly panel starts in September 2023. A decade of subscription
-    history exists in the line-level file (back to 2014) that isn't
-    in the panel. What does that older history tell us, and do we
-    need it?
-
-Q3. tenure_months in the panel counts months-since-first-panel-row,
-    not months-since-activation. We need true tenure-since-activation
-    from the line-level file to study age effects properly. Can we
-    build it?
-
-Q4. ~39% of all subscriptions are cancelled. But the cancellation reason
-    is missing for roughly half. Can the missing reasons be recovered,
-    or do we model without them?
-
-Q5. ~{len(nr):,} subscriptions are 'non_renewing'. Should they be treated as
-    churned, active, or a separate class?
-
-ABOUT CUSTOMER BEHAVIOUR
-
-Q6. The duration-at-cancellation histogram has a long tail but also
-    an early peak. How does cancellation risk change with subscription
-    age — is it front-loaded, back-loaded, or roughly constant?
-    The shape of that relationship is the starting empirical question
-    before any modelling decision is made.
-
-Q7. {100*panel['has_churn_event'].eq(1).mean():.0f}% of customer-months contain a churn event, but most of
-    those customers do not leave the following month. What are these
-    events? Scheduled-then-reversed cancellations? Pauses?
-    Understanding this tells us whether the 'churn signal' is clean.
-
-Q8. MRR among retained customers grows over time (mean MoM ratio > 1).
-    Is this expansion driven by price increases, upsell, or
-    customer mix change? This affects whether revenue should be
-    modelled as fixed or growing.
-
-Q9. Some customer-type × billing-period combinations have notably
-    different departure rates. Are these differences large enough
-    to matter, or within the noise? Formal testing required.
-
-ABOUT METHODOLOGY 
-
-Q10. Cohort retention curves (from line-level data) show empirical
-     retention above what a constant monthly churn rate would predict.
-     Does this pattern hold once we compute retention against true
-     activation dates? If yes, that's a finding to take into the
-     modelling decision — it tells us something about how cancellation
-     risk changes over time, but not yet which model to use.
-
-Q11. {_pct_of_all:.0%} of all panel customers had more than one churn-event
-     month ({_n_recurrent:,} / {panel["customer_id"].nunique():,}), which is {_pct_of_churners:.0%} of those
-     who ever had a churn event. They signalled cancellation, stayed,
-     then signalled again (or churned and returned). Is this a minor
-     footnote or a structural feature that any model needs to handle?
-
-Q12. The data has three grains: line item, event, and customer-month.
-     Which grain is the right unit of analysis for the research
-     question we eventually settle on? The answer depends entirely
-     on what that question is.
-""")
