@@ -9,10 +9,10 @@ from statsmodels.genmod.families.links import Logit
 
 warnings.filterwarnings("ignore")
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data"
+OUT  = Path(__file__).resolve().parent / "output"
 
-print("Task 11 — SQ2 decomposition (CLV_Markov vs CLV_flat)")
+# SQ2 decomposition (CLV_Markov vs CLV_flat)
 
 # 1. Reuse Task 9 setup
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
@@ -230,9 +230,9 @@ def project_clv(customers_df, mrr_dynamics="markov"):
 
     return clv
 
-print("\nProjecting CLV (Markov MRR)")
+# Project CLV (Markov MRR)
 clv_markov = project_clv(last_obs, "markov")
-print("Projecting CLV (flat MRR)")
+# Project CLV (flat MRR)
 clv_flat = project_clv(last_obs, "flat")
 
 # 4. Per-customer decomposition + segment aggregation
