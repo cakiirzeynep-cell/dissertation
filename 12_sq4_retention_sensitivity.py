@@ -9,11 +9,10 @@ from statsmodels.genmod.families.links import Logit
 
 warnings.filterwarnings("ignore")
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data"
+OUT  = Path(__file__).resolve().parent / "output"
 
-print("Task 12 — SQ4 retention sensitivity")
-
+# SQ4 retention sensitivity
 # 1. Panel + feature engineering (identical to Tasks 9/11)
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 panel["period_month"] = pd.to_datetime(panel["period_month"], format="%Y-%m")
@@ -241,7 +240,6 @@ def project_clv(customers_df, T=60, d_annual=0.10, hazard_reduction=None):
     return clv
 
 # 4. Baseline at T=60, d=10%, no reduction
-print("\nComputing baseline (T=60, d=10%, no reduction)")
 clv_baseline = project_clv(last_obs, T=60, d_annual=0.10, hazard_reduction=None)
 total_baseline = clv_baseline.sum()
 mean_baseline = clv_baseline.mean()
@@ -249,7 +247,6 @@ print(f"  Mean baseline CLV: £{mean_baseline:,.0f}")
 print(f"  Total customer-base value: £{total_baseline:,.0f}")
 
 # 5. Slice 1: Population-wide retention scenarios
-print("\nSlice 1: Population-wide retention scenarios")
 reduction_levels = [0.05, 0.10, 0.20]
 pop_rows = [{
     "scenario": "baseline",
@@ -283,7 +280,6 @@ pop_df = pd.DataFrame(pop_rows)
 pop_df.to_csv(OUT / "12_sq4_retention_population.csv", index=False)
 
 # 6. Slice 2: Per-segment retention scenarios
-print("\nSlice 2: Per-segment retention scenarios")
 seg_rows = []
 seg_arr = last_obs["customer_type_grouped"].values
 for seg in segments:
@@ -323,7 +319,6 @@ seg_df_out = pd.DataFrame(seg_rows)
 seg_df_out.to_csv(OUT / "12_sq4_retention_per_segment.csv", index=False)
 
 # 7. Slice 3: Top-decile-by-MRR retention scenarios
-print("\nSlice 3: Top-decile-by-MRR retention scenarios")
 mrr_initial = last_obs["mrr_end_of_month"].values
 top_decile_thresh = np.quantile(mrr_initial, 0.90)
 top_decile_mask = (mrr_initial >= top_decile_thresh)
@@ -417,7 +412,6 @@ print("\nHighest-leverage cells (is_cross_platform × tenure_bin)")
 print(cells_cp_tenure.round(2).to_string(index=False))
 
 # 9. Horizon sensitivity (T) — baseline and 10% population reduction
-print("\nHorizon sensitivity T ∈ {24, 36, 48, 60} at d=10%")
 T_grid = [24, 36, 48, 60]
 horizon_rows = []
 for T in T_grid:
@@ -439,7 +433,6 @@ horizon_df = pd.DataFrame(horizon_rows)
 horizon_df.to_csv(OUT / "12_sq4_sensitivity_horizon.csv", index=False)
 
 # 10. Discount sensitivity (d) — baseline and 10% population reduction
-print("\nDiscount sensitivity d ∈ {8%, 10%, 12%} at T=60")
 d_grid = [0.08, 0.10, 0.12]
 disc_rows = []
 for d in d_grid:
