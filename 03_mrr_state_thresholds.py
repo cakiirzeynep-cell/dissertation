@@ -7,7 +7,7 @@ OUT  = Path(__file__).resolve().parent / "output"
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 panel["period_month"] = pd.to_datetime(panel["period_month"], format="%Y-%m")
 
-# 3. MRR state thresholds for Markov
+# MRR state thresholds for Markov
 panel = panel.sort_values(["customer_id", "period_month"]).reset_index(drop=True)
 
 panel["mrr_prev"] = panel.groupby("customer_id")["mrr_end_of_month"].shift(1)
