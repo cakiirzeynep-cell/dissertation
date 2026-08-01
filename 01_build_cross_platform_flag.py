@@ -1,12 +1,11 @@
 from pathlib import Path
 import pandas as pd
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data" 
+OUT  = Path(__file__).resolve().parent / "output"
 OUT.mkdir(parents=True, exist_ok=True)
 
-print("Task 1 — Build cross-platform flag")
-
+# 1. Build cross-platform flag
 mig = pd.read_csv(DATA / "migration_matches_anon.csv", low_memory=False)
 print(f"\nMigration list: {len(mig):,} rows")
 print(f"Unique AL IDs:  {mig['al_customer_id'].nunique():,}")
@@ -39,7 +38,6 @@ cust_summary = panel_with_flag.drop_duplicates("customer_id")
 n_flagged = cust_summary["is_cross_platform"].sum()
 n_total   = len(cust_summary)
 pct       = n_flagged / n_total
-print(f"\nVerification")
 print(f"Customers flagged in panel: {n_flagged} / {n_total} ({pct:.1%})")
 
 # Cross-platform AL customers not in panel
@@ -58,10 +56,7 @@ print(cp_by_type.to_string())
 
 out_path = DATA / "artlogic_panel_enriched_v2.csv"
 panel_with_flag.to_csv(out_path, index=False)
-print(f"\nSaved: {out_path}")
-print(f"  Shape: {panel_with_flag.shape}")
 
 cp_ref = al_dedup.rename(columns={"al_customer_id": "customer_id"})
 cp_ref_path = OUT / "01_cross_platform_customer_reference.csv"
 cp_ref.to_csv(cp_ref_path, index=False)
-print(f"  Reference table: {cp_ref_path}")
