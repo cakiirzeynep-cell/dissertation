@@ -2,11 +2,10 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data"
+OUT  = Path(__file__).resolve().parent / "output"
 
-print("Task 7 — Markov MRR transition matrices")
-
+# Markov MRR transition matrices
 # 1. Load enriched panel + state assignments
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 panel["period_month"] = pd.to_datetime(panel["period_month"], format="%Y-%m")
