@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
+OUT  = Path(__file__).resolve().parent / "output"
+DATA = Path(__file__).resolve().parent.parent / "data"
 states = ["contracted", "stable", "expanded"]
 
 # saved hazard coefficients 
