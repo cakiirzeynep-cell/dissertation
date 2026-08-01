@@ -2,10 +2,9 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-OUT = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+OUT = Path(__file__).resolve().parent / "output"
 
-print("Task 10 — Segment aggregation for SQ1")
-
+# Segment aggregation for SQ1
 clv = pd.read_csv(OUT / "09_clv_per_customer.csv")
 print(f"\nPer-customer CLV loaded: {len(clv):,} customers")
 print(f"Base case CLV (T=60, d=10%) summary:")
