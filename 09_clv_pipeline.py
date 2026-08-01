@@ -9,11 +9,10 @@ from statsmodels.genmod.families.links import Logit
 
 warnings.filterwarnings("ignore")
 
-DATA = Path("/Users/zeynepcakir/Desktop/msc dissertation/data files ")
-OUT  = Path("/Users/zeynepcakir/Desktop/msc dissertation/analysis/output")
+DATA = Path(__file__).resolve().parent.parent / "data"
+OUT  = Path(__file__).resolve().parent / "output"
 
-print("Task 9 — CLV pipeline")
-
+# CLV pipeline
 # 1. Load panel + apply exclusions + feature engineering (same as Task 5)
 panel = pd.read_csv(DATA / "artlogic_panel_enriched_v2.csv", low_memory=False)
 panel["period_month"] = pd.to_datetime(panel["period_month"], format="%Y-%m")
@@ -279,76 +278,24 @@ def project_clv(customers_df, T, d_annual):
 
     return clv
 
-# 7. Run for base case and sensitivities
-print("\nComputing CLV across scenarios")
-scenarios = []
+# 7. Run all T × d combinations
 T_grid = [24, 36, 48, 60]
 d_grid = [0.08, 0.10, 0.12]
 
 result_df = last_obs[["customer_id", "customer_type_grouped", "billing_grouped",
-                       "country_grouped", "is_cross_platform",
-                       "tenure_months_recomp", "mrr_end_of_month",
-                       "state_current"]].copy()
+                      "country_grouped", "is_cross_platform",
+                      "tenure_months_recomp", "mrr_end_of_month",
+                      "state_current"]].copy()
 
-# Base case: T=60, d=10%
-print(" Base case T=60 d=10%")
-result_df["clv_T60_d10"] = project_clv(last_obs, 60, 0.10)
-
-# Sensitivities — T variations at d=10%
-print(f" Sensitivity T={T} d=10%")
-for T in [24, 36, 48]:
-    result_df[f"clv_T{T}_d10"] = project_clv(last_obs, T, 0.10)
-
-# Sensitivities — d variations at T=60
-print(f" Sensitivity T=60 d={pct}%")
-for d in [0.08, 0.12]:
-    pct = int(d * 100)
-    result_df[f"clv_T60_d{pct}"] = project_clv(last_obs, 60, d)
+for T in T_grid:
+    for d in d_grid:
+        pct = int(d * 100)
+        result_df[f"clv_T{T}_d{pct}"] = project_clv(last_obs, T, d)
 
 result_df.to_csv(OUT / "09_clv_per_customer.csv", index=False)
 print(f"\nPer-customer CLV saved: shape {result_df.shape}")
 
 # 8. Sensitivity grid summary
-grid_rows = []
-for T in T_grid:
-    for d in d_grid:
-        pct = int(d * 100)
-        col = f"clv_T{T}_d{pct}"
-        if col in result_df.columns:
-            grid_rows.append({
-                "T_months": T,
-                "d_annual": d,
-                "mean_CLV_GBP": result_df[col].mean(),
-                "median_CLV_GBP": result_df[col].median(),
-                "p10_CLV_GBP": result_df[col].quantile(0.10),
-                "p90_CLV_GBP": result_df[col].quantile(0.90),
-            })
-        elif T == 60 and d == 0.10:
-            col = "clv_T60_d10"
-            grid_rows.append({
-                "T_months": T, "d_annual": d,
-                "mean_CLV_GBP": result_df[col].mean(),
-                "median_CLV_GBP": result_df[col].median(),
-                "p10_CLV_GBP": result_df[col].quantile(0.10),
-                "p90_CLV_GBP": result_df[col].quantile(0.90),
-            })
-
-# Need to actually compute the missing combinations
-missing_combos = []
-for T in T_grid:
-    for d in d_grid:
-        pct = int(d * 100)
-        col = f"clv_T{T}_d{pct}"
-        if col not in result_df.columns:
-            missing_combos.append((T, d))
-
-print(f"\nComputing {len(missing_combos)} additional T×d combinations for the sensitivity grid")
-for T, d in missing_combos:
-    pct = int(d * 100)
-    col = f"clv_T{T}_d{pct}"
-    result_df[col] = project_clv(last_obs, T, d)
-
-# Rebuild grid summary
 grid_rows = []
 for T in T_grid:
     for d in d_grid:
@@ -361,14 +308,10 @@ for T in T_grid:
             "p10_CLV_GBP": result_df[col].quantile(0.10),
             "p90_CLV_GBP": result_df[col].quantile(0.90),
         })
-
 grid_df = pd.DataFrame(grid_rows)
 grid_df.to_csv(OUT / "09_clv_sensitivity_grid.csv", index=False)
 print("\nCLV sensitivity grid (T × d)")
 print(grid_df.round(0).to_string(index=False))
-
-# Save the expanded per-customer file too
-result_df.to_csv(OUT / "09_clv_per_customer.csv", index=False)
 
 # 9. Findings summary
 base = result_df["clv_T60_d10"]
