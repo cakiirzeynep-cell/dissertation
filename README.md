@@ -6,7 +6,7 @@ The pipeline estimates and decomposes per-customer CLV by combining a discrete-t
 
 ## Data availability
 
-The underlying Artlogic customer data cannot be shared under a confidentiality agreement, so this repository contains code only. The scripts expect the anonymised extracts in a `data files/` folder that is not included. The data sources, ETL steps, and full variable dictionary are documented in the dissertation's Technical Appendix (Sections A.1–A.4).
+The underlying Artlogic customer data cannot be shared under a confidentiality agreement, so this repository contains code only. The scripts expect the anonymised extracts in a `data/` folder at the repository root that is not included. The data sources, ETL steps, and full variable dictionary are documented in the dissertation's Technical Appendix (Sections A.1–A.4).
 
 ## Environment
 
@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 ## Run order
 
-The numbered scripts run in sequence; each reads the panel or intermediate outputs produced upstream. Run `build_panel_enriched.py` first, then `01`–`12` in order.
+The numbered scripts run in sequence; each reads the panel or intermediate outputs produced upstream. Run them from the `analysis/` folder: `cd analysis`, then `python build_panel_enriched.py`, then `01`–`12` in order.
 
 | Order | Script | What it does |
 |:---:|---|---|
@@ -48,4 +48,4 @@ The numbered scripts run in sequence; each reads the panel or intermediate outpu
 
 ## Outputs
 
-The scripts write intermediate CSVs and findings summaries to `analysis/output/`, and figures to `analysis/figures/`. Both are regenerated on each run and are not committed to the repository.
+The scripts write intermediate CSVs and findings summaries to `analysis/output/`, and figures to `analysis/figures/`. `eda_open.py` writes its exploratory outputs to `analysis/output_open/` and `analysis/figures_open/`. All are regenerated on each run and are not committed to the repository.
