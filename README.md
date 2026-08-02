@@ -49,3 +49,4 @@ The numbered scripts run in sequence; each reads the panel or intermediate outpu
 ## Outputs
 
 The scripts write intermediate CSVs and findings summaries to `analysis/output/`, and figures to `analysis/figures/`. `eda_open.py` writes its exploratory outputs to `analysis/output_open/` and `analysis/figures_open/`. All are regenerated on each run and are not committed to the repository.
+The Chapter 4 figures are included under `analysis/figures/`. Result tables are reproduced in the dissertation.
