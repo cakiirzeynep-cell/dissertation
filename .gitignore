@@ -6,12 +6,8 @@ data/
 # Analysis outputs and figures
 output/
 output_*/
-figures/
-figures_*/
 analysis/output/
 analysis/output_*/
-analysis/figures/
-analysis/figures_*/
 
 # Dissertation documents
 *.docx
