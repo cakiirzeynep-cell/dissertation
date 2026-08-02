@@ -11,16 +11,14 @@ import seaborn as sns
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-PROJECT_DIR = Path("/Users/zeynepcakir/Desktop/msc dissertation")
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR    = PROJECT_DIR / "data"  
 FIG_DIR     = PROJECT_DIR / "analysis" / "figures_open"
 OUT_DIR     = PROJECT_DIR / "analysis" / "output_open"
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# SNAPSHOT_DATE = date on which this analysis was run.
-# Used for computing durations of still-active subscriptions.
-SNAPSHOT_DATE = pd.Timestamp.today().normalize()
+SNAPSHOT_DATE = pd.Timestamp("2026-04-30") # data cut-off, fixed for reproducibility
 
 sns.set_theme(style="whitegrid", context="notebook")
 plt.rcParams.update({"figure.dpi": 110, "savefig.dpi": 150,
@@ -421,65 +419,6 @@ print("\nActivations by year")
 print(act.groupby("act_year").size().to_string())
 print("\nTop 10 activation months")
 print(monthly_new.sort_values(ascending=False).head(10).to_string())
-
-
-# Pre / post-acquisition split 
-ACQ_DATE = pd.Timestamp("2025-07-29")  
-
-act["cohort"] = np.where(act["act_month"] < ACQ_DATE, "pre-acquisition", "post-acquisition")
-ll_nodup = ll.drop_duplicates("subscription_id")
-ll_nodup = ll_nodup.merge(act[["subscription_id","cohort"]], on="subscription_id", how="left")
-
-print(f"\nPre / post-acquisition split (cut: {ACQ_DATE:%Y-%m-%d})")
-cohort_counts = act["cohort"].value_counts()
-print(cohort_counts.to_string())
-
-# Geography mix by cohort — did US share shift after acquisition?
-geo_cohort = (ll_nodup.dropna(subset=["cohort"])
-               .groupby(["cohort","billing_address_country"])
-               .size()
-               .reset_index(name="n")
-               .sort_values(["cohort","n"], ascending=[True, False]))
-# Vectorised 
-geo_pivot = (geo_cohort.sort_values(["cohort", "n"], ascending=[True, False])
-               .groupby("cohort")[["cohort","billing_address_country","n"]]
-               .head(5)
-               .reset_index(drop=True))
-print("\nTop 5 countries by cohort")
-print(geo_pivot.to_string(index=False))
-
-# Customer type mix by cohort
-type_cohort = (ll_nodup.dropna(subset=["cohort"])
-                .groupby(["cohort","customer_type"])
-                .size()
-                .unstack(fill_value=0))
-type_cohort_pct = type_cohort.div(type_cohort.sum(axis=1), axis=0)
-print("\nCustomer type mix by cohort (share)")
-print(type_cohort_pct.round(3).to_string())
-
-# MRR by cohort
-mrr_cohort = (sub_mrr.merge(ll_nodup[["subscription_id","cohort"]],
-                             on="subscription_id", how="left")
-               .loc[lambda d: d["status"] == "active"]
-               .groupby("cohort")["MRR_GBP"]
-               .agg(["count","median","mean","sum"]).round(0))
-print("\nMRR (active subs) by acquisition cohort")
-print(mrr_cohort.to_string())
-savetab(mrr_cohort, "05_mrr_by_cohort")
-
-fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-monthly_new.plot(color="#4c72b0", ax=axes[0])
-axes[0].axvline(ACQ_DATE, color="red", linestyle="--", alpha=0.7,
-                label=f"ACQ_DATE ({ACQ_DATE:%Y-%m-%d})")
-axes[0].set(title="Activations per month — with acquisition cut", ylabel="# new subs")
-axes[0].legend()
-type_cohort_pct.T.plot(kind="bar", ax=axes[1], color=["#4c72b0","#c44e52"])
-axes[1].set(title="Customer type mix: pre vs post acquisition",
-            xlabel="customer type", ylabel="share")
-axes[1].tick_params(axis="x", rotation=30)
-plt.tight_layout()
-savefig("05d_pre_post_acquisition")
-
 
 # Current age of active subscriptions 
 sub_level = (ll.sort_values("subscription_activated_date")
