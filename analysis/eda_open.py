@@ -279,12 +279,22 @@ print("\nMRR per active subscription (GBP, summed across line items)")
 print(active_mrr.describe(percentiles=[.1, .25, .5, .75, .9, .95, .99])
                 .to_string())
 
+pos_mrr = active_mrr[active_mrr > 0]
+CUT = 1000  # zoom the linear panel to the bulk; a thin tail runs to the max
+pct_over = (pos_mrr > CUT).mean() * 100
+
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-sns.histplot(active_mrr[active_mrr > 0], bins=60, ax=axes[0], color="#4c72b0")
-axes[0].set(title="MRR per active subscription (linear scale)",
+# Linear panel zoomed to £0-CUT so the bulk of the distribution is legible
+# The full range is dominated by a handful of high-MRR subscriptions
+sns.histplot(pos_mrr[pos_mrr <= CUT], bins=40, ax=axes[0], color="#4c72b0")
+axes[0].set(title=f"MRR per active subscription (£0–{CUT:,}, linear)",
             xlabel="MRR (£)", ylabel="# subscriptions")
-sns.histplot(np.log10(active_mrr[active_mrr > 0]), bins=60,
-             ax=axes[1], color="#4c72b0")
+axes[0].text(0.96, 0.94,
+             f"{pct_over:.1f}% of subscriptions exceed £{CUT:,}\n"
+             f"(long tail to a maximum of £{pos_mrr.max():,.0f})",
+             transform=axes[0].transAxes, ha="right", va="top", fontsize=10,
+             color="#444", bbox=dict(boxstyle="round,pad=0.4", fc="white", ec="#cccccc"))
+sns.histplot(np.log10(pos_mrr), bins=60, ax=axes[1], color="#4c72b0")
 axes[1].set(title="MRR per active subscription (log10 scale)",
             xlabel="log10(MRR £)", ylabel="# subscriptions")
 plt.tight_layout()
